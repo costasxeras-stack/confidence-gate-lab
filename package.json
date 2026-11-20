@@ -1,0 +1,17 @@
+{
+  "name": "confidence-gate-lab",
+  "version": "0.1.0",
+  "description": "When should an AI answer on its own, and when should a person check? A threshold explorer on the Banking77 dataset.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "embed": "cd scripts && node embed.mjs",
+    "serve": "python3 -m http.server 8000"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@energetic-ai/core": "^0.2.0",
+    "@energetic-ai/embeddings": "^0.2.0",
+    "@energetic-ai/model-embeddings-en": "^0.2.0"
+  }
+}

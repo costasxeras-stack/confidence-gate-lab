@@ -1,0 +1,6 @@
+node_modules/
+scripts/*.csv
+scripts/train.json
+scripts/test.json
+scripts/*.npy
+.DS_Store

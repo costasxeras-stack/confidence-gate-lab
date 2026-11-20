@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confidence Gate Lab</title>
+<meta name="description" content="When should an AI answer on its own, and when should a person check? Explore the trade-off on 3,080 real, labelled bank customer questions.">
+<meta name="theme-color" content="#f6f7fb">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233b47d6'/%3E%3Cpath d='M9 22h14M16 8v10m-4-4 4 4 4-4' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7fb; --card:#fff; --ink:#141824; --muted:#5b6275; --faint:#8a90a0; --line:#e3e6ee;
+  --accent:#3b47d6; --accent-soft:#eceefd;
+  --kw:#b4690e; --em:#3b47d6;
+  --good:#1f8a5b; --good-soft:#e6f4ec; --bad:#c2410c; --bad-soft:#fdeee6; --human:#5b6275; --human-soft:#eef0f4;
+  --display:"Bricolage Grotesque",Arial,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header.top{border-bottom:1px solid var(--line);background:#fff}
+header.top .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;height:60px}
+.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:19px;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:26px;height:26px;border-radius:7px;background:var(--accent);display:inline-block;position:relative}
+.brand i::after{content:"";position:absolute;left:6px;right:6px;top:12px;height:2.5px;background:#fff;border-radius:2px}
+.top nav{display:flex;gap:18px;font-size:14.5px}
+.top nav a{color:var(--muted);text-decoration:none;white-space:nowrap}
+.top nav a:hover{color:var(--ink)}
+.intro{padding:40px 0 26px}
+.intro .ver{font:500 12.5px var(--mono);color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:999px}
+.intro h1{font-size:clamp(30px,4.6vw,48px);line-height:1.05;margin-top:14px;max-width:24ch}
+.intro p{color:var(--muted);font-size:18px;max-width:70ch;margin:14px 0 0}
+.intro .note{font-size:14px;color:var(--faint);margin-top:12px}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.card h2{font-size:20px}
+.card .sub{color:var(--muted);font-size:14.5px;margin:4px 0 0}
+.label{font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:20px 0 8px;display:block}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;font:600 14.5px var(--body);padding:10px 8px;border-radius:9px;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,24,36,.12)}
+.seg button .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.mdesc{font-size:13.5px;color:var(--faint);margin-top:8px}
+.thr{display:flex;flex-direction:column}
+.thr output{font:600 30px var(--display);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px;margin:4px 0 0}
+.scale{display:flex;justify-content:space-between;font-size:12.5px;color:var(--faint)}
+.hint{font-size:13.5px;color:var(--muted);margin-top:6px}
+.picks{display:grid;gap:10px;margin-top:4px}
+.pick{border:1px solid var(--line);border-radius:12px;padding:14px}
+.pick .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14.5px}
+.pick input{width:84px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:500 15px var(--body);background:#fff;color:var(--ink)}
+.pick .res{font-size:14px;color:var(--muted);margin-top:8px}
+.pick .res b{color:var(--ink)}
+.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;font:600 14px var(--body);padding:8px 14px;border-radius:9px;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.kpi b{display:block;font:700 30px var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi span{display:block;font-size:13.5px;color:var(--muted);margin-top:2px}
+.kpi small{display:block;font-size:12.5px;color:var(--faint);margin-top:4px}
+.kpi.auto b{color:var(--good)} .kpi.err b{color:var(--bad)} .kpi.hum b{color:var(--human)}
+.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;margin:14px 0 6px;background:var(--human-soft)}
+.bar span{display:block;height:100%;transition:width .2s}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.chart-card{margin-top:18px}
+.chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+svg.chart{width:100%;height:auto;display:block;margin-top:10px;touch-action:none;cursor:crosshair}
+svg.chart text{font:12px var(--body);fill:var(--faint)}
+svg.chart .axis{stroke:var(--line)}
+svg.chart .grid{stroke:var(--line);stroke-dasharray:3 4}
+.section{margin-top:18px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.meter{display:inline-block;width:56px;height:6px;border-radius:9px;background:var(--human-soft);vertical-align:middle;margin-left:8px;overflow:hidden}
+.meter span{display:block;height:100%;background:var(--good)}
+.tbl-tools{display:flex;gap:10px;align-items:center;margin:14px 0 4px;flex-wrap:wrap}
+.tbl-tools input{flex:1;min-width:160px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font:15px var(--body)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font:600 13.5px var(--body);color:var(--muted);cursor:pointer}
+.tabs button[aria-pressed="true"]{border-color:var(--ink);color:var(--ink)}
+.ex{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ex li{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.ex q{display:block;font-size:15px;quotes:"\201C" "\201D"}
+.ex .meta{display:flex;gap:6px 12px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:6px}
+.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12.5px;font-weight:600}
+.chip.good{background:var(--good-soft);color:var(--good)} .chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.hum{background:var(--human-soft);color:var(--human)}
+.empty{color:var(--faint);font-size:14px;padding:10px 0}
+footer{margin:40px 0 0;border-top:1px solid var(--line);background:#fff}
+footer .wrap{padding:22px 20px 34px;font-size:13.5px;color:var(--muted);display:grid;gap:6px}
+.loading{padding:60px 0;text-align:center;color:var(--muted)}
+.sr{position:absolute;left:-9999px}
+@media (max-width:980px){
+  .grid{grid-template-columns:1fr}
+  .kpis{grid-template-columns:1fr 1fr}
+  .cols{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  .top nav a.hide-sm{display:none}
+  .top nav{gap:14px;font-size:14px}
+  .brand{font-size:17px}
+  .card{padding:18px}
+  .kpi b{font-size:25px}
+  .intro{padding-top:28px}
+  .intro p{font-size:16.5px}
+  td.hide-sm,th.hide-sm{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./"><i aria-hidden="true"></i>Confidence Gate Lab</a>
+    <nav>
+      <a href="https://github.com/costasxeras-stack/confidence-gate-lab/blob/main/docs/case-study.md">Case study</a>
+      <a class="hide-sm" href="https://github.com/costasxeras-stack/confidence-gate-lab">GitHub</a>
+      <a href="https://kostasxeras.com/">Portfolio</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <span class="ver" id="ver">v0.1.0</span>
+    <h1>When should the AI answer on its own, and when should a person check?</h1>
+    <p>Two classifiers sort 3,080 real bank customer questions into 77 intents. Every prediction comes with a confidence score. Move the threshold to choose which answers go out automatically and which go to a person, and see what each choice costs.</p>
+    <p class="note">Data: Banking77 test set (PolyAI, CC BY 4.0). Each question has one correct intent, labelled by people. Models trained on the 10,003-question training set.</p>
+  </section>
+
+  <div id="app" class="loading">Loading 3,080 questions…</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Built by <a href="https://kostasxeras.com/">Konstantinos Xeras</a> with Claude (Anthropic) as engineering partner. <a href="https://github.com/costasxeras-stack/confidence-gate-lab">Code, data scripts and decisions on GitHub</a>.</span>
+    <span>Banking77 by PolyAI, licensed CC BY 4.0. Numbers come from one public dataset and one test split. They show the method, not the accuracy of any production system.</span>
+  </div>
+</footer>
+
+<template id="tpl">
+  <div class="grid">
+    <aside class="card">
+      <h2>Your settings</h2>
+      <span class="label">Model</span>
+      <div class="seg" role="group" aria-label="Model">
+        <button data-model="keyword" aria-pressed="false"><span class="dot" style="background:var(--kw)"></span>Keyword</button>
+        <button data-model="embedding" aria-pressed="true"><span class="dot" style="background:var(--em)"></span>AI classifier</button>
+      </div>
+      <p class="mdesc" id="mdesc"></p>
+
+      <span class="label">Confidence threshold</span>
+      <div class="thr"><output id="thrOut" for="thr">0.70</output><span class="hint" id="thrHint"></span></div>
+      <input id="thr" type="range" min="0" max="1" step="0.01" value="0.70" aria-label="Confidence threshold">
+      <div class="scale"><span>0: AI answers everything</span><span>1: people check everything</span></div>
+
+      <span class="label">Find a threshold</span>
+      <div class="picks">
+        <div class="pick">
+          <div class="row">Highest share automated with at most <input id="tgt" type="number" min="0.1" max="30" step="0.1" value="2" aria-label="Maximum error rate in percent">% wrong</div>
+          <div class="res" id="tgtRes"></div>
+          <div class="row" style="margin-top:10px"><button class="btn" id="tgtBtn">Use this threshold</button></div>
+        </div>
+        <div class="pick">
+          <div class="row">Cost of one wrong automatic answer <input id="cWrong" type="number" min="0" step="1" value="10" aria-label="Cost of a wrong automatic answer"></div>
+          <div class="row" style="margin-top:8px">Cost of one human check <input id="cHuman" type="number" min="0" step="0.5" value="1" aria-label="Cost of a human check"></div>
+          <div class="res" id="costRes"></div>
+          <div class="row" style="margin-top:10px"><button class="btn" id="costBtn">Use cheapest threshold</button></div>
+          <p class="mdesc">These two costs are your assumptions, in any currency. Change them to match your product.</p>
+        </div>
+      </div>
+    </aside>
+
+    <div>
+      <div class="kpis">
+        <div class="kpi auto"><b id="kAuto">–</b><span>answered automatically</span><small id="kAutoN"></small></div>
+        <div class="kpi err"><b id="kErr">–</b><span>of automatic answers are wrong</span><small id="kErrN"></small></div>
+        <div class="kpi err"><b id="kWrong">–</b><span>wrong answers per 1,000 questions</span><small>reach the customer unchecked</small></div>
+        <div class="kpi hum"><b id="kHum">–</b><span>human checks per 1,000 questions</span><small id="kCost"></small></div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-head">
+          <div>
+            <h2>The trade-off</h2>
+            <p class="sub">Each line shows one model at every threshold. Further right means more automation, higher means more mistakes. Tap the chart to set the threshold.</p>
+          </div>
+        </div>
+        <div class="bar" aria-hidden="true"><span id="bGood" style="background:var(--good)"></span><span id="bBad" style="background:var(--bad)"></span></div>
+        <div class="legend"><span><i style="background:var(--good)"></i>Automatic and right</span><span><i style="background:var(--bad)"></i>Automatic and wrong</span><span><i style="background:var(--human-soft);border:1px solid var(--line)"></i>Sent to a person</span></div>
+        <svg class="chart" id="chart" viewBox="0 0 720 330" role="img" aria-label="Error rate against share automated for both models"></svg>
+        <div class="legend"><span><i style="background:var(--kw)"></i>Keyword</span><span><i style="background:var(--em)"></i>AI classifier</span><span>● your current setting</span></div>
+      </div>
+
+      <div class="cols section">
+        <div class="card">
+          <h2>Intents at this threshold</h2>
+          <p class="sub">Some intents are much harder than others. One threshold for all of them may not be right.</p>
+          <div class="tbl-tools"><input id="iq" type="search" placeholder="Filter intents" aria-label="Filter intents"><button class="btn ghost" id="sortBtn">Sort: hardest first</button></div>
+          <table><thead><tr><th>Intent</th><th class="n">Automated</th><th class="n hide-sm">Wrong</th></tr></thead><tbody id="itbl"></tbody></table>
+          <div class="row" style="margin-top:10px"><button class="btn ghost" id="moreBtn">Show all 77</button></div>
+        </div>
+        <div class="card">
+          <h2>Real questions at this threshold</h2>
+          <p class="sub">What a customer would get. The wrong automatic answers are the ones to worry about.</p>
+          <div class="tabs" role="group" aria-label="Which questions">
+            <button data-tab="bad" aria-pressed="true">Automatic and wrong</button>
+            <button data-tab="hum" aria-pressed="false">Sent to a person</button>
+            <button data-tab="good" aria-pressed="false">Automatic and right</button>
+          </div>
+          <ul class="ex" id="ex"></ul>
+          <p class="mdesc" id="exNote"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+(function(){
+  var D, model = 'embedding', thr = 0.70, sortHard = true, showAll = false, tab = 'bad';
+  var COL = {keyword:{p:2,c:3,s:4,color:'var(--kw)'}, embedding:{p:5,c:6,s:7,color:'var(--em)'}};
+  var $ = function(id){ return document.getElementById(id); };
+  var pct = function(x, d){ return (x*100).toFixed(d==null?1:d) + '%'; };
+  var nice = function(s){ s = s.replace(/_/g,' ').replace(/\?$/,''); return s.charAt(0).toUpperCase() + s.slice(1); };
+  var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var curves = {};
+
+  fetch('data/results.json').then(function(r){ return r.json(); }).then(function(d){
+    D = d; build(); render();
+  }).catch(function(){ $('app').textContent = 'The data file could not load. Refresh the page to try again.'; });
+
+  // Sorted confidences per model, used for curves and threshold search
+  function prep(m){
+    var c = COL[m], N = D.rows.length, arr = D.rows.map(function(r){ return [r[c.c], r[c.p] === r[1]]; });
+    arr.sort(function(a,b){ return b[0]-a[0]; });
+    var pts = [], wrong = 0;
+    for (var i=0;i<N;i++){ if(!arr[i][1]) wrong++; pts.push({conf:arr[i][0], auto:(i+1)/N, err:wrong/(i+1), wrong:wrong, n:i+1}); }
+    return pts;
+  }
+
+  function stats(m, t){
+    var c = COL[m], a=0, w=0, N=D.rows.length;
+    for (var i=0;i<N;i++){ var r=D.rows[i]; if (r[c.c] >= t){ a++; if (r[c.p] !== r[1]) w++; } }
+    return {N:N, auto:a, wrong:w, human:N-a};
+  }
+
+  // Highest automation where error rate among automated stays at or below target
+  function byTarget(m, target){
+    var pts = curves[m], best = null;
+    for (var i=0;i<pts.length;i++){
+      var p = pts[i];
+      var nextSame = i+1 < pts.length && pts[i+1].conf === p.conf;
+      if (!nextSame && p.err <= target) best = p;
+    }
+    return best;
+  }
+  function byCost(m, cw, ch){
+    var pts = curves[m], N = pts.length, best = {cost: ch*N, conf: 1.01, auto: 0, n: 0};
+    for (var i=0;i<N;i++){
+      var p = pts[i]; if (i+1 < N && pts[i+1].conf === p.conf) continue;
+      var cost = p.wrong*cw + (N-p.n)*ch;
+      if (cost < best.cost) best = {cost:cost, conf:p.conf, auto:p.auto, n:p.n, err:p.err};
+    }
+    return best;
+  }
+  // Round a confidence down to the slider's step so the chosen point is kept
+  // Rounded up, so the slider never automates more than the chosen point (errors stay within the target)
+  function toSlider(conf){ return Math.max(0, Math.min(1, Math.ceil(conf*100 - 1e-9)/100)); }
+
+  function build(){
+    $('app').className = ''; $('app').innerHTML = ''; $('app').appendChild($('tpl').content.cloneNode(true));
+    curves.keyword = prep('keyword'); curves.embedding = prep('embedding');
+    document.querySelectorAll('.seg button').forEach(function(b){ b.addEventListener('click', function(){ model = b.dataset.model; render(); }); });
+    $('thr').addEventListener('input', function(e){ thr = +e.target.value; render(); });
+    ['tgt','cWrong','cHuman'].forEach(function(id){ $(id).addEventListener('input', render); });
+    $('tgtBtn').addEventListener('click', function(){ var p = byTarget(model, +$('tgt').value/100); if (p){ thr = toSlider(p.conf); render(); } });
+    $('costBtn').addEventListener('click', function(){ var b = byCost(model, +$('cWrong').value||0, +$('cHuman').value||0); thr = b.n ? toSlider(b.conf) : 1; render(); });
+    $('iq').addEventListener('input', renderIntents);
+    $('sortBtn').addEventListener('click', function(){ sortHard = !sortHard; renderIntents(); });
+    $('moreBtn').addEventListener('click', function(){ showAll = !showAll; renderIntents(); });
+    document.querySelectorAll('.tabs button').forEach(function(b){ b.addEventListener('click', function(){ tab = b.dataset.tab; renderExamples(); }); });
+    var svg = $('chart');
+    var pick = function(e){
+      var G = geom(), r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * G.W;
+      var share = Math.max(0, Math.min(1, (x - G.L) / (G.R - G.L)));
+      var pts = curves[model], p = pts[Math.max(0, Math.min(pts.length-1, Math.round(share*pts.length)-1))];
+      thr = toSlider(p.conf); render();
+    };
+    svg.addEventListener('pointerdown', function(e){ pick(e); svg.setPointerCapture(e.pointerId); });
+    svg.addEventListener('pointermove', function(e){ if (e.buttons) pick(e); });
+    window.addEventListener('resize', drawChart);
+  }
+
+  function render(){
+    document.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.model === model); });
+    $('mdesc').textContent = D.models[model];
+    $('thr').value = thr; $('thrOut').textContent = thr.toFixed(2);
+    var s = stats(model, thr), N = s.N;
+    $('thrHint').textContent = 'answers with confidence ≥ ' + thr.toFixed(2) + ' go out';
+    $('kAuto').textContent = pct(s.auto/N); $('kAutoN').textContent = s.auto.toLocaleString('en') + ' of ' + N.toLocaleString('en');
+    $('kErr').textContent = s.auto ? pct(s.wrong/s.auto) : '–'; $('kErrN').textContent = s.wrong + ' wrong';
+    $('kWrong').textContent = Math.round(s.wrong/N*1000);
+    $('kHum').textContent = Math.round(s.human/N*1000);
+    var cw = +$('cWrong').value||0, ch = +$('cHuman').value||0;
+    var cost = (s.wrong*cw + s.human*ch)/N*1000;
+    $('kCost').textContent = 'total cost ' + Math.round(cost).toLocaleString('en') + ' per 1,000';
+    $('bGood').style.width = pct((s.auto-s.wrong)/N, 2); $('bBad').style.width = pct(s.wrong/N, 2);
+
+    var p = byTarget(model, +$('tgt').value/100);
+    var ps = p && stats(model, toSlider(p.conf));
+    $('tgtRes').innerHTML = p ? 'Threshold <b>' + toSlider(p.conf).toFixed(2) + '</b> automates <b>' + pct(ps.auto/N) + '</b> at ' + (ps.auto ? pct(ps.wrong/ps.auto) : '0%') + ' wrong.' : 'No threshold reaches that error rate with this model.';
+    $('tgtBtn').disabled = !p;
+    var b = byCost(model, cw, ch);
+    var bs = b.n && stats(model, toSlider(b.conf));
+    $('costRes').innerHTML = b.n ? 'Cheapest: threshold <b>' + toSlider(b.conf).toFixed(2) + '</b>, automating <b>' + pct(bs.auto/N) + '</b>, total <b>' + Math.round((bs.wrong*cw + bs.human*ch)/N*1000).toLocaleString('en') + '</b> per 1,000.' : 'Cheapest: send everything to a person.';
+    drawChart(); renderIntents(); renderExamples();
+  }
+
+  // Smaller canvas on phones, so text in the chart stays readable
+  function geom(){ return $('chart').clientWidth < 560 ? {W:380,H:290,L:40,R:356,T:14,B:250} : {W:720,H:330,L:58,R:700,T:16,B:286}; }
+  function drawChart(){
+    var G = geom(), W=G.W,H=G.H,L=G.L,R=G.R,T=G.T,B=G.B, maxE = 0.20;
+    $('chart').setAttribute('viewBox', '0 0 '+W+' '+H);
+    var x = function(a){ return L + a*(R-L); }, y = function(e){ return B - Math.min(e,maxE)/maxE*(B-T); };
+    var g = '';
+    for (var e=0;e<=maxE+1e-9;e+=0.05){ g += '<line class="grid" x1="'+L+'" x2="'+R+'" y1="'+y(e)+'" y2="'+y(e)+'"/><text x="'+(L-8)+'" y="'+(y(e)+4)+'" text-anchor="end">'+Math.round(e*100)+'%</text>'; }
+    for (var a=0;a<=1.0001;a+=0.25){ g += '<text x="'+x(a)+'" y="'+(B+20)+'" text-anchor="middle">'+Math.round(a*100)+'%</text>'; }
+    g += '<line class="axis" x1="'+L+'" x2="'+R+'" y1="'+B+'" y2="'+B+'"/>';
+    g += '<text x="'+((L+R)/2)+'" y="'+(H-4)+'" text-anchor="middle">'+(W<500?'Answered automatically':'Share of questions answered automatically')+'</text>';
+    if (W >= 500) g += '<text transform="translate(14 '+((T+B)/2)+') rotate(-90)" text-anchor="middle">Wrong among automatic</text>';
+    ['keyword','embedding'].forEach(function(m){
+      var pts = curves[m], d = '', step = 6;
+      for (var i=29;i<pts.length;i+=step){ d += (d?'L':'M') + x(pts[i].auto).toFixed(1) + ' ' + y(pts[i].err).toFixed(1); }
+      d += 'L' + x(1) + ' ' + y(pts[pts.length-1].err).toFixed(1);
+      g += '<path d="'+d+'" fill="none" stroke="'+COL[m].color+'" stroke-width="'+(m===model?3:1.6)+'" opacity="'+(m===model?1:.55)+'"/>';
+    });
+    var s = stats(model, thr), N = s.N;
+    if (s.auto){ var cx = x(s.auto/N), cy = y(s.wrong/s.auto);
+      g += '<line x1="'+cx+'" x2="'+cx+'" y1="'+T+'" y2="'+B+'" stroke="'+COL[model].color+'" stroke-dasharray="2 4"/>';
+      g += '<circle cx="'+cx+'" cy="'+cy+'" r="7" fill="#fff" stroke="'+COL[model].color+'" stroke-width="3"/>'; }
+    $('chart').innerHTML = g;
+  }
+
+  function renderIntents(){
+    var c = COL[model], by = {};
+    D.rows.forEach(function(r){
+      var k = r[1]; by[k] = by[k] || {n:0,auto:0,wrong:0};
+      by[k].n++; if (r[c.c] >= thr){ by[k].auto++; if (r[c.p] !== r[1]) by[k].wrong++; }
+    });
+    var q = ($('iq').value||'').toLowerCase().replace(/\s+/g,'_');
+    var list = Object.keys(by).map(function(k){ var v = by[k]; return {name:D.intents[k], n:v.n, auto:v.auto/v.n, wrong:v.wrong, wr:v.auto? v.wrong/v.auto : 0}; })
+      .filter(function(v){ return !q || v.name.toLowerCase().indexOf(q) >= 0; });
+    list.sort(sortHard ? function(a,b){ return b.wrong-a.wrong || a.auto-b.auto; } : function(a,b){ return a.name < b.name ? -1 : 1; });
+    $('sortBtn').textContent = sortHard ? 'Sort: hardest first' : 'Sort: A to Z';
+    var shown = showAll || q ? list : list.slice(0, 10);
+    $('moreBtn').textContent = showAll ? 'Show fewer' : 'Show all 77'; $('moreBtn').style.display = q ? 'none' : '';
+    $('itbl').innerHTML = shown.map(function(v){
+      return '<tr><td>'+esc(nice(v.name))+'</td><td class="n">'+Math.round(v.auto*100)+'%<span class="meter"><span style="width:'+Math.round(v.auto*100)+'%"></span></span></td><td class="n hide-sm">'+v.wrong+' of '+v.n+'</td></tr>';
+    }).join('') || '<tr><td colspan="3" class="empty">No intent matches.</td></tr>';
+  }
+
+  function renderExamples(){
+    document.querySelectorAll('.tabs button').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.tab === tab); });
+    var c = COL[model], items = [];
+    D.rows.forEach(function(r){
+      var auto = r[c.c] >= thr, ok = r[c.p] === r[1];
+      var kind = !auto ? 'hum' : ok ? 'good' : 'bad';
+      if (kind === tab) items.push(r);
+    });
+    items.sort(function(a,b){ return tab === 'hum' ? a[c.c]-b[c.c] : b[c.c]-a[c.c]; });
+    var total = items.length; items = items.slice(0, 8);
+    $('ex').innerHTML = items.map(function(r){
+      var ok = r[c.p] === r[1];
+      var predChip = tab === 'hum' ? '<span class="chip hum">AI suggested: '+esc(nice(D.intents[r[c.p]]))+'</span>' : '<span class="chip '+(ok?'good':'bad')+'">Answered as: '+esc(nice(D.intents[r[c.p]]))+'</span>';
+      return '<li><q>'+esc(r[0])+'</q><div class="meta">'+predChip+'<span>Correct: '+esc(nice(D.intents[r[1]]))+'</span><span>Confidence '+r[c.c].toFixed(2)+'</span></div></li>';
+    }).join('') || '<li class="empty">None at this threshold.</li>';
+    var what = {bad:'wrong automatic answers, most confident first', hum:'questions sent to a person, least confident first', good:'right automatic answers, most confident first'}[tab];
+    $('exNote').textContent = total ? 'Showing ' + Math.min(8,total) + ' of ' + total.toLocaleString('en') + ' ' + what + '.' : '';
+  }
+})();
+</script>
+</body>
+</html>

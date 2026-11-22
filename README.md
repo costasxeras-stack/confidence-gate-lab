@@ -38,9 +38,9 @@ Full detail in the [case study](docs/case-study.md). All numbers are from the Ba
 - AI classifier: sentence embeddings (the small English model from EnergeticAI) with logistic regression on top.
 - Both models are trained once, offline. The app only reads their predictions from `data/results.json`, so it needs no server and no API key.
 
-## How it was built
+## My role
 
-I framed the problem, chose the dataset and the comparisons, and wrote the findings. Claude (Anthropic) was my engineering partner for the code. Decisions are recorded in [docs/decisions](docs/decisions).
+I framed the problem, chose the dataset and the comparisons, and wrote the findings. Decisions are recorded in [docs/decisions](docs/decisions).
 
 ## Run it locally
 

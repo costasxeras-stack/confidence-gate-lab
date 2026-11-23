@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.0] (23 November 2026)
+
+### Changed
+- New design. The page opens with all 3,080 questions drawn as dots, sorted by confidence, with the threshold as a gate you drag through them. The result is one sentence under the gate instead of four number tiles.
+- Own look for this app: grey-green background, Archivo and Public Sans, square corners.
+- Data note moved to the footer.
+
+### Added
+- Decision record 0004: every question as a dot.
+
 ## [0.1.0] (20 November 2026)
 
 ### Added

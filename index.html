@@ -5,123 +5,116 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Confidence Gate Lab</title>
 <meta name="description" content="When should an AI answer on its own, and when should a person check? Explore the trade-off on 3,080 real, labelled bank customer questions.">
-<meta name="theme-color" content="#f6f7fb">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233b47d6'/%3E%3Cpath d='M9 22h14M16 8v10m-4-4 4 4 4-4' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#edf1ef">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2318262b'/%3E%3Cpath d='M9 22h14M16 8v10m-4-4 4 4 4-4' stroke='%23e3a21a' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,600..800&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f7fb; --card:#fff; --ink:#141824; --muted:#5b6275; --faint:#8a90a0; --line:#e3e6ee;
-  --accent:#3b47d6; --accent-soft:#eceefd;
-  --kw:#b4690e; --em:#3b47d6;
-  --good:#1f8a5b; --good-soft:#e6f4ec; --bad:#c2410c; --bad-soft:#fdeee6; --human:#5b6275; --human-soft:#eef0f4;
-  --display:"Bricolage Grotesque",Arial,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --paper:#edf1ef; --sheet:#ffffff; --ink:#18262b; --muted:#4f6168; --faint:#7d8d93; --rule:#cfd8d5;
+  --gate:#e3a21a; --gate-ink:#7a5208; --right:#1c7c6d; --wrong:#c73a2e; --queue:#8b98a0; --queue-ink:#5c6a71; --queue-soft:#dde3e1;
+  --kw:#9a5b13; --em:#1c7c6d;
+  --head:"Archivo",Arial,sans-serif; --body:"Public Sans",system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{overflow-x:clip}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--body);-webkit-font-smoothing:antialiased}
-a{color:var(--accent)}
-h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
-.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
-header.top{border-bottom:1px solid var(--line);background:#fff}
-header.top .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;height:60px}
-.brand{white-space:nowrap;font-family:var(--display);font-weight:700;font-size:19px;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:10px}
-.brand i{width:26px;height:26px;border-radius:7px;background:var(--accent);display:inline-block;position:relative}
-.brand i::after{content:"";position:absolute;left:6px;right:6px;top:12px;height:2.5px;background:#fff;border-radius:2px}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--right)}
+h1,h2,h3{font-family:var(--head);margin:0;text-wrap:balance}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+:focus-visible{outline:3px solid var(--gate);outline-offset:2px}
+header.top .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;height:58px;border-bottom:2px solid var(--ink)}
+.brand{font:800 17px var(--head);font-stretch:125%;color:var(--ink);text-decoration:none;white-space:nowrap}
 .top nav{display:flex;gap:18px;font-size:14.5px}
 .top nav a{color:var(--muted);text-decoration:none;white-space:nowrap}
-.top nav a:hover{color:var(--ink)}
-.intro{padding:40px 0 26px}
-.intro .ver{font:500 12.5px var(--mono);color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:999px}
-.intro h1{font-size:clamp(30px,4.6vw,48px);line-height:1.05;margin-top:14px;max-width:24ch}
-.intro p{color:var(--muted);font-size:18px;max-width:70ch;margin:14px 0 0}
-.intro .note{font-size:14px;color:var(--faint);margin-top:12px}
-.grid{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
-.card h2{font-size:20px}
-.card .sub{color:var(--muted);font-size:14.5px;margin:4px 0 0}
-.label{font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:20px 0 8px;display:block}
-.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
-.seg button{border:0;background:transparent;font:600 14.5px var(--body);padding:10px 8px;border-radius:9px;color:var(--muted);cursor:pointer}
-.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,24,36,.12)}
-.seg button .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.top nav a:hover{color:var(--ink);text-decoration:underline}
+.intro{padding:34px 0 20px;display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:end}
+.intro h1{font-size:clamp(30px,4.4vw,50px);line-height:1.02;font-weight:800;font-stretch:112%;letter-spacing:-.015em;max-width:20ch}
+.intro p{color:var(--muted);margin:0;max-width:52ch}
+.intro .ver{font-weight:600;color:var(--ink)}
+/* the gate */
+.gate{background:var(--sheet);border:2px solid var(--ink);border-radius:4px;padding:18px 18px 14px;position:relative}
+.gate-sides{display:flex;justify-content:space-between;gap:12px;font-size:14.5px;margin-bottom:10px}
+.gate-sides b{font:800 22px var(--head);font-variant-numeric:tabular-nums;display:block;line-height:1.1}
+.gate-sides .r{text-align:right}
+.gate-sides .l b{color:var(--queue-ink)} .gate-sides .r b{color:var(--right)}
+canvas.dots{display:block;width:100%;touch-action:none;cursor:ew-resize}
+.gate-axis{display:flex;justify-content:space-between;font-size:12.5px;color:var(--faint);margin-top:6px}
+.gate-key{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+.gate-key i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.verdict{font:600 clamp(18px,2.1vw,23px)/1.4 var(--head);margin:22px 0 4px;max-width:62ch}
+.verdict .w{color:var(--wrong)} .verdict .a{color:var(--right)} .verdict .q{color:var(--queue-ink)}
+.verdict-sub{color:var(--muted);font-size:14.5px;margin:0}
+/* panels */
+.grid{display:grid;grid-template-columns:330px 1fr;gap:22px;align-items:start;margin-top:30px}
+.panel{min-width:0;background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:20px}
+.panel h2{font:700 19px var(--head)}
+.panel .sub{color:var(--muted);font-size:14.5px;margin:4px 0 0}
+.field{margin-top:18px}
+.field > span{display:block;font-weight:600;font-size:14.5px;margin-bottom:8px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--ink);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:var(--sheet);font:600 14.5px var(--body);padding:10px 8px;color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
 .mdesc{font-size:13.5px;color:var(--faint);margin-top:8px}
-.thr{display:flex;flex-direction:column}
-.thr output{font:600 30px var(--display);font-variant-numeric:tabular-nums}
-input[type=range]{width:100%;accent-color:var(--accent);height:28px;margin:4px 0 0}
+.thr{display:flex;align-items:baseline;gap:10px}
+.thr output{font:800 32px var(--head);font-variant-numeric:tabular-nums;color:var(--gate-ink)}
+.thr span{font-size:13.5px;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--gate);height:28px;margin:2px 0 0}
 .scale{display:flex;justify-content:space-between;font-size:12.5px;color:var(--faint)}
-.hint{font-size:13.5px;color:var(--muted);margin-top:6px}
-.picks{display:grid;gap:10px;margin-top:4px}
-.pick{border:1px solid var(--line);border-radius:12px;padding:14px}
+.pick{border-top:1px solid var(--rule);padding-top:14px;margin-top:16px}
 .pick .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14.5px}
-.pick input{width:84px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:500 15px var(--body);background:#fff;color:var(--ink)}
+.pick input{width:80px;padding:8px 10px;border:1px solid var(--ink);border-radius:3px;font:500 15px var(--body);background:#fff;color:var(--ink)}
 .pick .res{font-size:14px;color:var(--muted);margin-top:8px}
 .pick .res b{color:var(--ink)}
-.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;font:600 14px var(--body);padding:8px 14px;border-radius:9px;cursor:pointer}
-.btn.ghost{background:#fff;color:var(--accent)}
-.btn:disabled{opacity:.45;cursor:default}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
-.kpi b{display:block;font:700 30px var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.kpi span{display:block;font-size:13.5px;color:var(--muted);margin-top:2px}
-.kpi small{display:block;font-size:12.5px;color:var(--faint);margin-top:4px}
-.kpi.auto b{color:var(--good)} .kpi.err b{color:var(--bad)} .kpi.hum b{color:var(--human)}
-.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;margin:14px 0 6px;background:var(--human-soft)}
-.bar span{display:block;height:100%;transition:width .2s}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-.chart-card{margin-top:18px}
-.chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
-svg.chart{width:100%;height:auto;display:block;margin-top:10px;touch-action:none;cursor:crosshair}
+.btn{border:1px solid var(--ink);background:var(--ink);color:#fff;font:600 14px var(--body);padding:9px 14px;border-radius:3px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+svg.chart{width:100%;height:auto;display:block;margin-top:12px;touch-action:none;cursor:crosshair}
 svg.chart text{font:12px var(--body);fill:var(--faint)}
-svg.chart .axis{stroke:var(--line)}
-svg.chart .grid{stroke:var(--line);stroke-dasharray:3 4}
-.section{margin-top:18px}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+svg.chart .axis{stroke:var(--ink)}
+svg.chart .grid{stroke:var(--rule)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:14px;height:3px;margin-right:6px;vertical-align:3px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;margin-top:22px}
 table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.meter{display:inline-block;width:56px;height:6px;border-radius:9px;background:var(--human-soft);vertical-align:middle;margin-left:8px;overflow:hidden}
-.meter span{display:block;height:100%;background:var(--good)}
+th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:13px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--ink)}
+td{overflow-wrap:anywhere}
+td.n,th.n{overflow-wrap:normal;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.meter{display:inline-block;width:56px;height:6px;background:var(--queue-soft);vertical-align:middle;margin-left:8px;overflow:hidden}
+.meter span{display:block;height:100%;background:var(--right)}
 .tbl-tools{display:flex;gap:10px;align-items:center;margin:14px 0 4px;flex-wrap:wrap}
-.tbl-tools input{flex:1;min-width:160px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font:15px var(--body)}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px}
-.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font:600 13.5px var(--body);color:var(--muted);cursor:pointer}
-.tabs button[aria-pressed="true"]{border-color:var(--ink);color:var(--ink)}
-.ex{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.ex li{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.ex q{display:block;font-size:15px;quotes:"\201C" "\201D"}
+.tbl-tools input{flex:1;min-width:160px;padding:9px 12px;border:1px solid var(--ink);border-radius:3px;font:15px var(--body)}
+.tabs{display:flex;border-bottom:2px solid var(--ink);margin:14px 0 10px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:9px 12px;font:600 14px var(--body);color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:4px solid transparent;margin-bottom:-2px}
+.tabs button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--gate)}
+.ex{list-style:none;margin:0;padding:0}
+.ex li{padding:12px 0;border-bottom:1px solid var(--rule)}
+.ex q{display:block;font-size:15.5px;quotes:"\201C" "\201D"}
 .ex .meta{display:flex;gap:6px 12px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:6px}
-.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12.5px;font-weight:600}
-.chip.good{background:var(--good-soft);color:var(--good)} .chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.hum{background:var(--human-soft);color:var(--human)}
+.chip{display:inline-block;padding:1px 8px;border-radius:2px;font-size:12.5px;font-weight:600}
+.chip.good{background:#dcefea;color:var(--right)} .chip.bad{background:#f7dfdc;color:var(--wrong)} .chip.hum{background:var(--queue-soft);color:var(--muted)}
 .empty{color:var(--faint);font-size:14px;padding:10px 0}
-footer{margin:40px 0 0;border-top:1px solid var(--line);background:#fff}
-footer .wrap{padding:22px 20px 34px;font-size:13.5px;color:var(--muted);display:grid;gap:6px}
-.loading{padding:60px 0;text-align:center;color:var(--muted)}
-.sr{position:absolute;left:-9999px}
-@media (max-width:980px){
-  .grid{grid-template-columns:1fr}
-  .kpis{grid-template-columns:1fr 1fr}
-  .cols{grid-template-columns:1fr}
-}
+footer{margin:44px 0 0}
+footer .wrap{padding:20px 22px 34px;font-size:13.5px;color:var(--muted);display:grid;gap:6px;border-top:2px solid var(--ink)}
+.loading{padding:60px 0;color:var(--muted)}
+@media (max-width:980px){.grid,.cols,.intro{grid-template-columns:minmax(0,1fr)}.intro{gap:12px}}
 @media (max-width:520px){
   .top nav a.hide-sm{display:none}
-  .top nav{gap:14px;font-size:14px}
-  .brand{font-size:17px}
-  .card{padding:18px}
-  .kpi b{font-size:25px}
-  .intro{padding-top:28px}
-  .intro p{font-size:16.5px}
+  .gate{padding:14px 12px 12px}
+  .gate-sides b{font-size:19px}
+  .panel{padding:16px}
   td.hide-sm,th.hide-sm{display:none}
 }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="./"><i aria-hidden="true"></i>Confidence Gate Lab</a>
+    <a class="brand" href="./">Confidence Gate Lab</a>
     <nav>
       <a href="https://github.com/costasxeras-stack/confidence-gate-lab/blob/main/docs/case-study.md">Case study</a>
       <a class="hide-sm" href="https://github.com/costasxeras-stack/confidence-gate-lab">GitHub</a>
@@ -132,97 +125,90 @@ footer .wrap{padding:22px 20px 34px;font-size:13.5px;color:var(--muted);display:
 
 <main class="wrap">
   <section class="intro">
-    <span class="ver" id="ver">v0.1.0</span>
     <h1>When should the AI answer on its own, and when should a person check?</h1>
-    <p>Two classifiers sort 3,080 real bank customer questions into 77 intents. Every prediction comes with a confidence score. Move the threshold to choose which answers go out automatically and which go to a person, and see what each choice costs.</p>
-    <p class="note">Data: Banking77 test set (PolyAI, CC BY 4.0). Each question has one correct intent, labelled by people. Models trained on the 10,003-question training set.</p>
+    <p>Each dot below is one real bank customer question, sorted by how sure the AI is. Drag the gate. Everything to its right goes out as an automatic answer, everything to its left waits for a person. <span class="ver" id="ver">Version 0.2.0.</span></p>
   </section>
 
-  <div id="app" class="loading">Loading 3,080 questions…</div>
+  <div id="app" class="loading">Loading 3,080 questions.</div>
 </main>
 
 <footer>
   <div class="wrap">
+    <span>Data: Banking77 test set (PolyAI, CC BY 4.0). Each question has one correct intent, labelled by people. Models trained on the 10,003-question training set.</span>
     <span>Built by <a href="https://kostasxeras.com/">Konstantinos Xeras</a>. <a href="https://github.com/costasxeras-stack/confidence-gate-lab">Code, data scripts and decisions on GitHub</a>.</span>
     <span>Banking77 by PolyAI, licensed CC BY 4.0. Numbers come from one public dataset and one test split. They show the method, not the accuracy of any production system.</span>
   </div>
 </footer>
 
 <template id="tpl">
+  <section class="gate" aria-label="Every question, sorted by confidence">
+    <div class="gate-sides">
+      <div class="l"><b id="gHum">–</b>wait for a person</div>
+      <div class="r"><b id="gAuto">–</b>answered automatically</div>
+    </div>
+    <canvas class="dots" id="dots" role="img" aria-label="3,080 questions sorted by confidence, with the threshold as a gate"></canvas>
+    <div class="gate-axis"><span>AI least sure</span><span>AI most sure</span></div>
+    <div class="gate-key"><span><i style="background:var(--queue)"></i>Waits for a person</span><span><i style="background:var(--right)"></i>Automatic and right</span><span><i style="background:var(--wrong)"></i>Automatic and wrong</span><span><i style="background:var(--gate);border-radius:1px;width:4px"></i>The gate</span></div>
+  </section>
+  <p class="verdict" id="verdict"></p>
+  <p class="verdict-sub" id="verdictSub"></p>
+
   <div class="grid">
-    <aside class="card">
-      <h2>Your settings</h2>
-      <span class="label">Model</span>
-      <div class="seg" role="group" aria-label="Model">
-        <button data-model="keyword" aria-pressed="false"><span class="dot" style="background:var(--kw)"></span>Keyword</button>
-        <button data-model="embedding" aria-pressed="true"><span class="dot" style="background:var(--em)"></span>AI classifier</button>
+    <aside class="panel">
+      <h2>Settings</h2>
+      <div class="field"><span>Model</span>
+        <div class="seg" role="group" aria-label="Model">
+          <button data-model="keyword" aria-pressed="false">Keyword</button>
+          <button data-model="embedding" aria-pressed="true">AI classifier</button>
+        </div>
+        <p class="mdesc" id="mdesc"></p>
       </div>
-      <p class="mdesc" id="mdesc"></p>
-
-      <span class="label">Confidence threshold</span>
-      <div class="thr"><output id="thrOut" for="thr">0.70</output><span class="hint" id="thrHint"></span></div>
-      <input id="thr" type="range" min="0" max="1" step="0.01" value="0.70" aria-label="Confidence threshold">
-      <div class="scale"><span>0: AI answers everything</span><span>1: people check everything</span></div>
-
-      <span class="label">Find a threshold</span>
-      <div class="picks">
-        <div class="pick">
-          <div class="row">Highest share automated with at most <input id="tgt" type="number" min="0.1" max="30" step="0.1" value="2" aria-label="Maximum error rate in percent">% wrong</div>
-          <div class="res" id="tgtRes"></div>
-          <div class="row" style="margin-top:10px"><button class="btn" id="tgtBtn">Use this threshold</button></div>
-        </div>
-        <div class="pick">
-          <div class="row">Cost of one wrong automatic answer <input id="cWrong" type="number" min="0" step="1" value="10" aria-label="Cost of a wrong automatic answer"></div>
-          <div class="row" style="margin-top:8px">Cost of one human check <input id="cHuman" type="number" min="0" step="0.5" value="1" aria-label="Cost of a human check"></div>
-          <div class="res" id="costRes"></div>
-          <div class="row" style="margin-top:10px"><button class="btn" id="costBtn">Use cheapest threshold</button></div>
-          <p class="mdesc">These two costs are your assumptions, in any currency. Change them to match your product.</p>
-        </div>
+      <div class="field"><span>Gate position (confidence threshold)</span>
+        <div class="thr"><output id="thrOut" for="thr">0.70</output><span id="thrHint"></span></div>
+        <input id="thr" type="range" min="0" max="1" step="0.01" value="0.70" aria-label="Confidence threshold">
+        <div class="scale"><span>0: AI answers everything</span><span>1: people check everything</span></div>
+      </div>
+      <div class="pick">
+        <div class="row">Most automation with at most <input id="tgt" type="number" min="0.1" max="30" step="0.1" value="2" aria-label="Maximum error rate in percent">% wrong</div>
+        <div class="res" id="tgtRes"></div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="tgtBtn">Move the gate there</button></div>
+      </div>
+      <div class="pick">
+        <div class="row">Cost of one wrong automatic answer <input id="cWrong" type="number" min="0" step="1" value="10" aria-label="Cost of a wrong automatic answer"></div>
+        <div class="row" style="margin-top:8px">Cost of one human check <input id="cHuman" type="number" min="0" step="0.5" value="1" aria-label="Cost of a human check"></div>
+        <div class="res" id="costRes"></div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="costBtn">Move the gate to the cheapest point</button></div>
+        <p class="mdesc">These two costs are your assumptions, in any currency.</p>
       </div>
     </aside>
 
-    <div>
-      <div class="kpis">
-        <div class="kpi auto"><b id="kAuto">–</b><span>answered automatically</span><small id="kAutoN"></small></div>
-        <div class="kpi err"><b id="kErr">–</b><span>of automatic answers are wrong</span><small id="kErrN"></small></div>
-        <div class="kpi err"><b id="kWrong">–</b><span>wrong answers per 1,000 questions</span><small>reach the customer unchecked</small></div>
-        <div class="kpi hum"><b id="kHum">–</b><span>human checks per 1,000 questions</span><small id="kCost"></small></div>
-      </div>
+    <section class="panel">
+      <h2>The trade-off for both models</h2>
+      <p class="sub">Further right means more automation, higher means more mistakes. Tap the chart to move the gate.</p>
+      <svg class="chart" id="chart" viewBox="0 0 720 330" role="img" aria-label="Error rate against share automated for both models"></svg>
+      <div class="legend"><span><i style="background:var(--kw)"></i>Keyword</span><span><i style="background:var(--em)"></i>AI classifier</span><span>Circle: the gate now</span></div>
+    </section>
+  </div>
 
-      <div class="card chart-card">
-        <div class="chart-head">
-          <div>
-            <h2>The trade-off</h2>
-            <p class="sub">Each line shows one model at every threshold. Further right means more automation, higher means more mistakes. Tap the chart to set the threshold.</p>
-          </div>
-        </div>
-        <div class="bar" aria-hidden="true"><span id="bGood" style="background:var(--good)"></span><span id="bBad" style="background:var(--bad)"></span></div>
-        <div class="legend"><span><i style="background:var(--good)"></i>Automatic and right</span><span><i style="background:var(--bad)"></i>Automatic and wrong</span><span><i style="background:var(--human-soft);border:1px solid var(--line)"></i>Sent to a person</span></div>
-        <svg class="chart" id="chart" viewBox="0 0 720 330" role="img" aria-label="Error rate against share automated for both models"></svg>
-        <div class="legend"><span><i style="background:var(--kw)"></i>Keyword</span><span><i style="background:var(--em)"></i>AI classifier</span><span>● your current setting</span></div>
+  <div class="cols">
+    <section class="panel">
+      <h2>Intents at this gate</h2>
+      <p class="sub">Some intents are much harder than others. One gate for all of them may not be right.</p>
+      <div class="tbl-tools"><input id="iq" type="search" placeholder="Filter intents" aria-label="Filter intents"><button class="btn ghost" id="sortBtn">Sort: hardest first</button></div>
+      <table><thead><tr><th>Intent</th><th class="n">Automated</th><th class="n hide-sm">Wrong</th></tr></thead><tbody id="itbl"></tbody></table>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" id="moreBtn">Show all 77</button></div>
+    </section>
+    <section class="panel">
+      <h2>Real questions at this gate</h2>
+      <p class="sub">What a customer would get. The wrong automatic answers are the ones to worry about.</p>
+      <div class="tabs" role="group" aria-label="Which questions">
+        <button data-tab="bad" aria-pressed="true">Automatic and wrong</button>
+        <button data-tab="hum" aria-pressed="false">Waits for a person</button>
+        <button data-tab="good" aria-pressed="false">Automatic and right</button>
       </div>
-
-      <div class="cols section">
-        <div class="card">
-          <h2>Intents at this threshold</h2>
-          <p class="sub">Some intents are much harder than others. One threshold for all of them may not be right.</p>
-          <div class="tbl-tools"><input id="iq" type="search" placeholder="Filter intents" aria-label="Filter intents"><button class="btn ghost" id="sortBtn">Sort: hardest first</button></div>
-          <table><thead><tr><th>Intent</th><th class="n">Automated</th><th class="n hide-sm">Wrong</th></tr></thead><tbody id="itbl"></tbody></table>
-          <div class="row" style="margin-top:10px"><button class="btn ghost" id="moreBtn">Show all 77</button></div>
-        </div>
-        <div class="card">
-          <h2>Real questions at this threshold</h2>
-          <p class="sub">What a customer would get. The wrong automatic answers are the ones to worry about.</p>
-          <div class="tabs" role="group" aria-label="Which questions">
-            <button data-tab="bad" aria-pressed="true">Automatic and wrong</button>
-            <button data-tab="hum" aria-pressed="false">Sent to a person</button>
-            <button data-tab="good" aria-pressed="false">Automatic and right</button>
-          </div>
-          <ul class="ex" id="ex"></ul>
-          <p class="mdesc" id="exNote"></p>
-        </div>
-      </div>
-    </div>
+      <ul class="ex" id="ex"></ul>
+      <p class="mdesc" id="exNote"></p>
+    </section>
   </div>
 </template>
 
@@ -299,7 +285,10 @@ footer .wrap{padding:22px 20px 34px;font-size:13.5px;color:var(--muted);display:
     };
     svg.addEventListener('pointerdown', function(e){ pick(e); svg.setPointerCapture(e.pointerId); });
     svg.addEventListener('pointermove', function(e){ if (e.buttons) pick(e); });
-    window.addEventListener('resize', drawChart);
+    window.addEventListener('resize', function(){ drawChart(); drawDots(); });
+    var dc = $('dots');
+    dc.addEventListener('pointerdown', function(e){ dotsPick(e); dc.setPointerCapture(e.pointerId); });
+    dc.addEventListener('pointermove', function(e){ if (e.buttons) dotsPick(e); });
   }
 
   function render(){
@@ -307,16 +296,13 @@ footer .wrap{padding:22px 20px 34px;font-size:13.5px;color:var(--muted);display:
     $('mdesc').textContent = D.models[model];
     $('thr').value = thr; $('thrOut').textContent = thr.toFixed(2);
     var s = stats(model, thr), N = s.N;
-    $('thrHint').textContent = 'answers with confidence ≥ ' + thr.toFixed(2) + ' go out';
-    $('kAuto').textContent = pct(s.auto/N); $('kAutoN').textContent = s.auto.toLocaleString('en') + ' of ' + N.toLocaleString('en');
-    $('kErr').textContent = s.auto ? pct(s.wrong/s.auto) : '–'; $('kErrN').textContent = s.wrong + ' wrong';
-    $('kWrong').textContent = Math.round(s.wrong/N*1000);
-    $('kHum').textContent = Math.round(s.human/N*1000);
+    $('thrHint').textContent = 'confidence ' + thr.toFixed(2) + ' or higher goes out';
     var cw = +$('cWrong').value||0, ch = +$('cHuman').value||0;
     var cost = (s.wrong*cw + s.human*ch)/N*1000;
-    $('kCost').textContent = 'total cost ' + Math.round(cost).toLocaleString('en') + ' per 1,000';
-    $('bGood').style.width = pct((s.auto-s.wrong)/N, 2); $('bBad').style.width = pct(s.wrong/N, 2);
-
+    $('gAuto').textContent = s.auto.toLocaleString('en') + ' (' + pct(s.auto/N) + ')';
+    $('gHum').textContent = s.human.toLocaleString('en') + ' (' + pct(s.human/N) + ')';
+    $('verdict').innerHTML = 'At ' + thr.toFixed(2) + ', the ' + (model==='embedding'?'AI classifier':'keyword model') + ' answers <span class="a">' + pct(s.auto/N) + '</span> of questions on its own, and <span class="w">' + (s.auto ? pct(s.wrong/s.auto) : '0%') + '</span> of those answers are wrong. People check <span class="q">' + Math.round(s.human/N*1000) + ' in every 1,000</span>.';
+    $('verdictSub').textContent = s.wrong + ' wrong answers reach customers unchecked out of ' + N.toLocaleString('en') + ' questions. With your costs, that is ' + Math.round(cost).toLocaleString('en') + ' per 1,000 questions.';
     var p = byTarget(model, +$('tgt').value/100);
     var ps = p && stats(model, toSlider(p.conf));
     $('tgtRes').innerHTML = p ? 'Threshold <b>' + toSlider(p.conf).toFixed(2) + '</b> automates <b>' + pct(ps.auto/N) + '</b> at ' + (ps.auto ? pct(ps.wrong/ps.auto) : '0%') + ' wrong.' : 'No threshold reaches that error rate with this model.';
@@ -324,7 +310,7 @@ footer .wrap{padding:22px 20px 34px;font-size:13.5px;color:var(--muted);display:
     var b = byCost(model, cw, ch);
     var bs = b.n && stats(model, toSlider(b.conf));
     $('costRes').innerHTML = b.n ? 'Cheapest: threshold <b>' + toSlider(b.conf).toFixed(2) + '</b>, automating <b>' + pct(bs.auto/N) + '</b>, total <b>' + Math.round((bs.wrong*cw + bs.human*ch)/N*1000).toLocaleString('en') + '</b> per 1,000.' : 'Cheapest: send everything to a person.';
-    drawChart(); renderIntents(); renderExamples();
+    drawChart(); drawDots(); renderIntents(); renderExamples();
   }
 
   // Smaller canvas on phones, so text in the chart stays readable
@@ -347,9 +333,44 @@ footer .wrap{padding:22px 20px 34px;font-size:13.5px;color:var(--muted);display:
     });
     var s = stats(model, thr), N = s.N;
     if (s.auto){ var cx = x(s.auto/N), cy = y(s.wrong/s.auto);
-      g += '<line x1="'+cx+'" x2="'+cx+'" y1="'+T+'" y2="'+B+'" stroke="'+COL[model].color+'" stroke-dasharray="2 4"/>';
-      g += '<circle cx="'+cx+'" cy="'+cy+'" r="7" fill="#fff" stroke="'+COL[model].color+'" stroke-width="3"/>'; }
+      g += '<line x1="'+cx+'" x2="'+cx+'" y1="'+T+'" y2="'+B+'" stroke="#e3a21a" stroke-width="2"/>';
+      g += '<circle cx="'+cx+'" cy="'+cy+'" r="7" fill="#e3a21a" stroke="#18262b" stroke-width="2"/>'; }
     $('chart').innerHTML = g;
+  }
+
+
+  // Every question as one dot, sorted by confidence left to right, with the gate
+  var order = {};
+  function drawDots(){
+    var cv = $('dots'); if (!cv) return;
+    var c = COL[model], N = D.rows.length;
+    if (!order[model]) order[model] = D.rows.slice().sort(function(a,b){ return a[c.c]-b[c.c]; });
+    var rows = order[model];
+    var w = cv.clientWidth, cell = w < 560 ? 5 : 6, cols = Math.floor(w / cell), lines = Math.ceil(N / cols);
+    var h = lines * cell, dpr = window.devicePixelRatio || 1;
+    cv.width = w*dpr; cv.height = h*dpr; cv.style.height = h + 'px';
+    var g = cv.getContext('2d'); g.scale(dpr, dpr);
+    var css = getComputedStyle(document.documentElement);
+    var colR = css.getPropertyValue('--right'), colW = css.getPropertyValue('--wrong'), colQ = css.getPropertyValue('--queue'), colG = css.getPropertyValue('--gate');
+    var gateCol = null, r = cell*0.36;
+    // column-major: column k holds questions k*lines .. k*lines+lines-1, so left to right is least to most sure
+    for (var i=0;i<N;i++){
+      var q = rows[i], k = Math.floor(i / lines), j = i % lines;
+      var auto = q[c.c] >= thr;
+      if (auto && gateCol === null) gateCol = k;
+      g.fillStyle = !auto ? colQ : (q[c.p] === q[1] ? colR : colW);
+      g.beginPath(); g.arc(k*cell + cell/2, j*cell + cell/2, r, 0, 6.2832); g.fill();
+    }
+    if (gateCol === null) gateCol = Math.ceil(N/lines);
+    var gx = gateCol*cell - 1;
+    g.fillStyle = colG; g.fillRect(gx-1.5, 0, 4, h);
+    cv._geo = {cell:cell, lines:lines, rows:rows};
+  }
+  function dotsPick(e){
+    var cv = $('dots'), G = cv._geo; if (!G) return;
+    var rect = cv.getBoundingClientRect(), k = Math.floor((e.clientX - rect.left) / G.cell);
+    var i = Math.max(0, Math.min(G.rows.length-1, k * G.lines));
+    thr = toSlider(G.rows[i][COL[model].c]); render();
   }
 
   function renderIntents(){

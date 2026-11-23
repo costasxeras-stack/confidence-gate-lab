@@ -2,7 +2,7 @@
 
 **When should an AI answer on its own, and when should a person check? Explore the trade-off on 3,080 real, labelled bank customer questions.**
 
-**Current version:** 0.1.0
+**Current version:** 0.2.0
 
 Live demo: https://kostasxeras.com/confidence-gate-lab/
 

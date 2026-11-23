@@ -1,6 +1,6 @@
 {
   "name": "confidence-gate-lab",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "When should an AI answer on its own, and when should a person check? A threshold explorer on the Banking77 dataset.",
   "private": true,
   "type": "module",
